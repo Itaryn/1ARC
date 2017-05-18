@@ -1,23 +1,34 @@
 import lecture, chip8, opcode
 from tkinter import *
 
+fenetreChip8 = Tk() # Création de la fenêtre tkinter
+
 # Procédure principal qui va permettre de lancer l'instruction puis l'affichage
 
 def fonctionnement():
     # On récupère l'Id et le code hexadécimale
     val, oc = opcode.interpretation()
-    # Si on a l'Id égale à 1 on efface l'écran
     if val == 1:
+        # 00E0 : On efface l'écran
         effacerEcran()
-    # Si on a l'Id égale à 23 on va dessiner le sprite
     elif val == 23:
+        # DXYN : On dessine un sprite selon les données
         dessinerSprite(opcode.valueX(oc), opcode.valueY(oc), opcode.valueN(oc))
+    elif val == 27:
+        # FX0A : On attend l'appuie d'une touche puis on stocke dans VX
+        attente = True
+        while attente:
+            for x, i in enumerate(chip8.tabTouche):
+                if x == 1:
+                    chip8.V[opcode.valueX(oc)] = i
     # On raffraichit les registres pour les afficher
     refreshRegistre()
     # On décompte les timers
     decompteSoundDelay()
     # On incrémente le PC
     chip8.PC += 2
+    # A chaque tour on réinitialise le tableau des touches
+    chip8.tabTouche = [0] * 16
     # On regarde si on est en mode step by step, si on ne l'est pas on relance cette procédure après 4ms
     if not stepActiver.get():
         fenetreChip8.after(4, fonctionnement)
@@ -36,7 +47,7 @@ def effacerEcran():
     # On efface l'écran graphique
     ecran.create_rectangle((5, 5, 325, 165), fill="black")
     # On éteint tous les pixels dans le tableau
-    chip8.tabEcran = [[0] * 64] * 32
+    chip8.tabEcran = [[0 for x in range(64)] for x in range(32)]
 
 # Procédure qui va dessiner un sprite
 
@@ -46,33 +57,26 @@ def dessinerSprite(x,y,n):
     for i in range(n):
         # On stocke le binaire à l'adresse mémoire adéquate (notre registre I + le nombre de ligne i)
         binaire = bin(chip8.memoire[chip8.I + i])
-        print('binaire : ', binaire)
         # On calcul la ligne où l'on va allumer ou éteindre les pixels
         coordY = (chip8.V[y] + i) % 32
-        print('coordY : ', coordY)
         # On test chaque bit de l'octet récupéré
-        for y in range(-1, -9, -1):
-            print('binaire[y] : ', binaire[y])
+        for k in range(-1, -9, -1):
             # Si on arrive à la fin de l'octet on arrête la boucle
-            if binaire[y] == 'b':
+            if binaire[k] == 'b':
                 break
             # Si notre bit est égale à 1, ça veut dire qu'il va falloir changer la valeur du pixel
-            if binaire[y] == '1':
+            if binaire[k] == '1':
                 # On calcul la collone du pixel
-                coordX = (chip8.V[x] + y + 8) % 64
-                print('coordX : ', coordX)
-                if coordY <= 32 and coordX <= 64:
-                    # Si le pixel est éteint on l'allume
-                    if chip8.tabEcran[coordY][coordX] == 0:
-                        chip8.tabEcran[coordY][coordX] = 1
-                        ecran.create_rectangle((coordX*5+5, coordY*5+5, coordX*5 + 10, coordY*5 + 10), fill="white")
-                    # Si il était allumé on l'éteint et on met VF à 1
-                    else:
-                        chip8.tabEcran[coordY][coordX] = 0
-                        chip8.V[0xF] = 1
-                        coordX *= 5
-                        coordY *= 5
-                        ecran.create_rectangle((coordX*5+5, coordY*5+5, coordX*5 + 10, coordY*5 + 10), fill="black")
+                coordX = (chip8.V[x] + k + 8) % 64
+                # Si le pixel est éteint on l'allume
+                if chip8.tabEcran[coordY][coordX] == 0:
+                    chip8.tabEcran[coordY][coordX] = 1
+                    ecran.create_rectangle((coordX*5 + 5, coordY*5 + 5, coordX*5 + 10, coordY*5 + 10), fill="white")
+                # Si il était allumé on l'éteint et on met VF à 1
+                else:
+                    chip8.tabEcran[coordY][coordX] = 0
+                    chip8.V[0xF] = 1
+                    ecran.create_rectangle((coordX*5 + 5, coordY*5 + 5, coordX*5 + 10, coordY*5 + 10), fill="black")
 
 # Procédure qui va changer les valeurs des registres
 
@@ -130,7 +134,45 @@ def refreshEcran():
             else:
                 ecran.create_rectangle((j * 5 + 5, i * 5 + 5, j * 5 + 10, i * 5 + 10), fill="black")
 
-fenetreChip8 = Tk() # Création de la fenêtre tkinter
+# Procédure qui va changer la valeur des touches, appuyée ou non
+
+def touche(event):
+    if event.char == "&":
+        chip8.tabTouche[0] = 1
+    if event.char == "é":
+        chip8.tabTouche[1] = 1
+    if event.char == '"':
+        chip8.tabTouche[2] = 1
+    if event.char == "'":
+        chip8.tabTouche[3] = 1
+    if event.char == "a":
+        chip8.tabTouche[4] = 1
+    if event.char == "z":
+        chip8.tabTouche[5] = 1
+    if event.char == "e":
+        chip8.tabTouche[6] = 1
+    if event.char == "r":
+        chip8.tabTouche[7] = 1
+    if event.char == "q":
+        chip8.tabTouche[8] = 1
+    if event.char == "s":
+        chip8.tabTouche[9] = 1
+    if event.char == "d":
+        chip8.tabTouche[10] = 1
+    if event.char == "f":
+        chip8.tabTouche[11] = 1
+    if event.char == "w":
+        chip8.tabTouche[12] = 1
+    if event.char == "x":
+        chip8.tabTouche[13] = 1
+    if event.char == "c":
+        chip8.tabTouche[14] = 1
+    if event.char == "v":
+        chip8.tabTouche[15] = 1
+
+# On créer la détection des 16 touches
+
+fenetreChip8.bind("<Key>", touche)
 
 # Procédure qui change l'activation ou non des boutons step by step
 
@@ -147,9 +189,8 @@ def stepChange():
 # Procédure qui revient une étape en arrière du programme
 
 def pcArriere():
-    for i in range(512, 612):
-        print(i, end=" : ")
-        print(hex(chip8.memoire[i]))
+    for x in chip8.tabEcran:
+        print(x)
 
 # Procédure qui avance d'une étape
 
@@ -169,9 +210,10 @@ def lancement():
     chip8.SP = 0
     chip8.saut = [0] * 16
     chip8.nbrSaut = 0
-    chip8.tabEcran = [[0] * 64] * 32
+    chip8.tabEcran = [[0 for x in range(64)] for x in range(32)]
     effacerEcran()
     chip8.chargerCaractere()
+    ecran.focus_set() # On donne le focus à l'écran
     # On stock le programme en mémoire
     lecture.lecture(programme.get())
     # On lance la procédure fonctionnement pour commencer le programme

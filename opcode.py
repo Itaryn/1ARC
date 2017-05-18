@@ -149,16 +149,15 @@ def interpretation():
         chip8.V[valueX(opcode)] = random.randint(0, 255) & valueNN(opcode)
     elif action == 24:
         # EX9E : On saute la prochaine instruction si la touche qui a la valeur de VX est pressée
-        print()
+        if chip8.tabTouche[chip8.V[valueX(opcode)]] == 1:
+            chip8.PC += 2
     elif action == 25:
         # EXA1 : On saute la prochaine instruction si la touche qui a la valeur de VX n'est pas pressée
-        print()
+        if chip8.tabTouche[chip8.V[valueX(opcode)]] == 0:
+            chip8.PC += 2
     elif action == 26:
         # FX07 : VX prend la valeur de DT
         chip8.V[valueX(opcode)] = chip8.DT
-    elif action == 27:
-        # FX0A : On attend qu'une touche soit pressée puis on stocke sa valeur dans VX
-        print()
     elif action == 28:
         # FX15 : DT prend la valeur de VX
         chip8.DT = chip8.V[valueX(opcode)]
@@ -187,7 +186,7 @@ def interpretation():
         for i in range(valueX(opcode)):
             chip8.V[i] = chip8.memoire[chip8.I+i]
     else:
-        if action != 1 and action != 23:
+        if action != 1 and action != 23 and action != 27:
             print("!!! Erreur !!!")
     return action, opcode
 

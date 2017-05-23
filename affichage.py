@@ -31,7 +31,7 @@ def fonctionnement():
     chip8.tabTouche = [0] * 16
     # On regarde si on est en mode step by step, si on ne l'est pas on relance cette procédure après 4ms
     if not stepActiver.get():
-        fenetreChip8.after(4, fonctionnement)
+        fenetreChip8.after(16, fonctionnement)
 
 # Procédure qui décompte les 2 timers de 1 tant qu'ils sont supérieurs à 0
 
@@ -186,15 +186,10 @@ def stepChange():
         arriere.config(state=DISABLED)
         avant.config(state=DISABLED)
 
-# Procédure qui revient une étape en arrière du programme
-
-def pcArriere():
-    for x in chip8.tabEcran:
-        print(x)
-
 # Procédure qui avance d'une étape
 
 def pcAvant():
+    lecture.sauvegarde("savetemp")
     fonctionnement()
 
 # Procédure qui charge un programme lorque le bouton Load est appuyé
@@ -275,12 +270,15 @@ sauv.grid(column="4", row="14", columnspan=1) # On place l'entrée
 boutonMemoire = Button(fenetreChip8, text="Mémoire", command=affichageMemoire)
 boutonMemoire.grid(column="3", row="4")
 
-# Création des boutons avant/arrière pour se déplacer en step by step
+# Création du bouton de relance
 
-arriere = Button(fenetreChip8, text="<-", state=DISABLED, command=pcArriere)
-avant = Button(fenetreChip8, text="->", state=DISABLED, command=pcAvant)
-arriere.grid(column="5", row="4")
-avant.grid(column="6", row="4")
+boutonRelance = Button(fenetreChip8, text="Relance", command=pcAvant)
+boutonRelance.grid(column="5", row="2")
+
+# Création du bouton avant pour se déplacer en step by step
+
+boutonAvant = Button(fenetreChip8, text="->", state=DISABLED, command=pcAvant)
+boutonAvant.grid(column="5", row="4")
 
 # Création de la case à cocher pour le step by step
 

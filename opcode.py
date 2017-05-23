@@ -98,18 +98,20 @@ def interpretation():
         chip8.V[valueX(opcode)] = (chip8.V[valueX(opcode)] ^ chip8.V[valueY(opcode)])
     elif action == 14:
         # 8XY4 : On ajoute VY à VX (stocké dans VX) si on dépasse 255, on met VF à 1 (carry)
-        if (chip8.V[valueX(opcode)] + chip8.V[valueY(opcode)]) > 255:
+        chip8.V[valueX(opcode)] += chip8.V[valueY(opcode)]
+        if chip8.V[valueX(opcode)] > 255:
             chip8.V[0xF] = 1
+            chip8.V[valueX(opcode)] = 255
         else:
             chip8.V[0xF] = 0
-        chip8.V[valueX(opcode)] += (valueY(opcode) - chip8.V[0xF])
     elif action == 15:
         # 8XY5 : On retire VY à VX (stocké dans VX) si VX > VY, on met VF à 1
-        if chip8.V[valueX(opcode)] > chip8.V[valueY(opcode)]:
+        chip8.V[valueX(opcode)] -= chip8.V[valueY(opcode)]
+        if chip8.V[valueX(opcode)] < 0:
             chip8.V[0xF] = 1
+            chip8.V[valueX(opcode)] = 0
         else:
             chip8.V[0xF] = 0
-        chip8.V[valueX(opcode)] -= chip8.V[valueY(opcode)]
     elif action == 16:
         # 8XY6 : On déplace tous les bits de VX de 1 vers la droite (ou division par 2)
         # Si VX était impair on met VF à 1
@@ -120,11 +122,12 @@ def interpretation():
         chip8.V[valueX(opcode)] = (chip8.V[valueX(opcode)] - chip8.V[0xF]) / 2
     elif action == 17:
         # 8XY7 : On retire VX à VY (stocké dans VX) si VY > VX, on met VF à 1
-        if chip8.V[valueY(opcode)] > chip8.V(valueX(opcode)):
+        chip8.V[valueX(opcode)] = chip8.V[valueY(opcode)] - chip8.V[valueX(opcode)]
+        if chip8.V[valueY(opcode)] < 0:
             chip8.V[0xF] = 1
+            chip8.V[valueX(opcode)] = 0
         else:
             chip8.V[0xF] = 0
-        chip8.V[valueX(opcode)] = chip8.V[valueY(opcode)] - chip8.V[valueX(opcode)]
     elif action == 18:
         # 8XYE : On déplace tous les bits de VX de 1 vers la gauche (ou multiplication par 2)
         # Si VX était supérieur à 128 on met VF à 1
@@ -165,27 +168,29 @@ def interpretation():
         # FX18 : ST prend la valeur de VX
         chip8.ST = chip8.V[valueX(opcode)]
     elif action == 30:
-        # FX1E : On ajoute VX à I (stockée dans I)
-        if chip8.I + chip8.V[valueX(opcode)] > 0xFFF:
+        # FX1E : On ajoute VX à I (stockée dans I) et on met VF à 1 si I est supérieur à 0xFFF
+        chip8.I += chip8.V[valueX(opcode)]
+        if chip8.I > 0xFFF:
             chip8.V[0xF] = 1
+            chip8.I = 0xFFF
         else:
             chip8.V[0xF] = 0
-        chip8.I += chip8.V[valueX(opcode)] - chip8.V[0xF]
     elif action == 31:
-        # FX29 : I prend la valeur de VX
+        # FX29 : I prend la valeur du caractère au numéro de VX
         chip8.I = 5 * chip8.V[valueX(opcode)]
     elif action == 32:
         # FX33
-        print()
+        print("Opcode pas encore implanté")
     elif action == 33:
-        # FX55
+        # FX55 : On stocke les valeurs de V0 à VX en mémoire à partir de I
         for i in range(valueX(opcode)):
             chip8.memoire[chip8.I+i] = chip8.V[i]
     elif action == 34:
-        # FX65
+        # FX65 : On prend les valeurs en mémoire à partir de I que l'on met dans V0 à VX
         for i in range(valueX(opcode)):
             chip8.V[i] = chip8.memoire[chip8.I+i]
     else:
+        # Si aucun opcode n'a match ce n'est pas normal
         if action != 1 and action != 23 and action != 27:
             print("!!! Erreur !!!")
     return action, opcode
